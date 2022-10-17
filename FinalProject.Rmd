@@ -1,6 +1,6 @@
 ---
 title: "FinalProject"
-author: "Shyam Nuggehalli"
+author: "Matt Wendel"
 date: "4/10/2021"
 output: html_document
 ---
