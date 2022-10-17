@@ -1,0 +1,200 @@
+---
+title: "FinalProject"
+author: "Shyam Nuggehalli"
+date: "4/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(scales)
+library(lubridate)
+source("../scripts/viridis.R")
+```
+
+## R Markdown
+
+```{r, echo=FALSE}
+scores_2012_13 <- read_csv("../data/2012-13/raw_scores.txt")
+spec(scores_2012_13)
+odds_2012_13 <- read_csv("../data/2012-13/vegas.txt")
+spec(odds_2012_13)
+
+scores_2013_14 <- read_csv("../data/2013-14/raw_scores.txt")
+spec(scores_2013_14)
+odds_2013_14 <- read_csv("../data/2013-14/vegas.txt")
+spec(odds_2013_14)
+
+scores_2014_15 <- read_csv("../data/2014-15/raw_scores.txt")
+spec(scores_2014_15)
+odds_2014_15 <- read_csv("../data/2014-15/vegas.txt")
+spec(odds_2014_15)
+
+scores_2015_16 <- read_csv("../data/2015-16/raw_scores.txt")
+spec(scores_2015_16)
+odds_2015_16 <- read_csv("../data/2015-16/vegas.txt")
+spec(odds_2015_16)
+
+scores_2016_17 <- read_csv("../data/2016-17/raw_scores.txt")
+spec(scores_2016_17)
+odds_2016_17 <- read_csv("../data/2016-17/vegas.txt")
+spec(odds_2016_17)
+
+scores_2017_18 <- read_csv("../data/2017-18/raw_scores.txt")
+spec(scores_2017_18)
+odds_2017_18 <- read_csv("../data/2017-18/vegas.txt")
+spec(odds_2017_18)
+
+scores_2018_19 <- read_csv("../data/2018-19/raw_scores.txt")
+spec(scores_2018_19)
+odds_2018_19 <- read_csv("../data/2018-19/vegas.txt")
+spec(odds_2018_19)
+```
+
+```{r}
+data_2012_13 <- odds_2012_13 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2012_13, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2013_14 <- odds_2013_14 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2013_14, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2014_15 <- odds_2014_15 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2014_15, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2015_16 <- odds_2015_16 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2015_16, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2016_17 <- odds_2016_17 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2016_17, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2017_18 <- odds_2017_18 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2017_18, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+data_2018_19 <- odds_2018_19 %>%
+  rename(GAME_ID = "GameId") %>%
+  left_join(scores_2018_19, by = "GAME_ID") %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct() %>%
+  drop_na()
+
+```
+
+```{r}
+data_12_14 <- rbind(data_2012_13, data_2013_14)
+data_12_15 <- rbind(data_12_14, data_2014_15)
+data_12_16 <- rbind(data_12_15, data_2015_16)
+data_12_17 <- rbind(data_12_16, data_2016_17)
+data_12_18 <- rbind(data_12_17, data_2017_18)
+data_12_19 <- rbind(data_12_18, data_2018_19)
+final_data <- data_12_19 %>%
+  select(GAME_ID, Average_Line_OU, Total, Average_Line_Spread, Spread) %>%
+  distinct(GAME_ID, .keep_all = TRUE) %>%
+  mutate(Spread = -Spread)
+final_data
+```
+
+```{r}
+final_data <- final_data %>%
+              mutate(
+                O_Success = case_when(
+                  Total > Average_Line_OU ~ TRUE,
+                  Total <= Average_Line_OU ~ FALSE,
+                )
+              )
+
+final_data %>%
+  filter(is.na(O_Success))
+
+ggplot(final_data, mapping = aes(x = Total, y = Average_Line_OU, color = O_Success), position = "jitter")+
+  geom_point() 
+```
+
+```{r}
+final_summary <- final_data %>%
+                 group_by(
+                   O_Success
+                 ) %>%
+                 summarise(
+                   n = n(),
+                   p_hat = n/nrow(final_data)
+                 )
+final_summary
+```
+**Hypothesis Test**
+
+Null Hypothesis: $p_1$ = $p_2$ --> The probability of hitting the over is equal to the probability of hitting the under
+
+Alternative Hypothesis: $p_1$ != $p_2$ --> The probability of hitting the over is not equal to the probability of hitting the under
+
+```{r}
+test = final_summary%>%
+  summarize(est = p_hat[1] - p_hat[2],
+            n_1 = n[1],
+            n_2 = n[2],
+            n = sum(n),
+            p_pool = n_2/n, ##point estimate under null hypothesis
+            se_pool = sqrt(p_pool*(1-p_pool)*(1/n_1 + 1/n_2)), ##standard error
+            z = est / se_pool,
+            p_value = 2*pnorm(-abs(z))
+  )
+test
+```
+P value = 0.682 which is greater than the null hypothesis of 0.5
+
+
+```{r}
+N <-  100000  ## number of repetitions 
+df_test <- tibble(
+  p_hat_1 = rbinom(N,4320,test$p_pool) / 4320,
+  p_hat_2 = rbinom(N,4282,test$p_pool) / 4282,
+  diff = p_hat_1 - p_hat_2,
+  extreme = abs(diff) >= abs(test$est)) ## compare simulated differences to our observed difference
+
+p_value_e <- mean(df_test$extreme)
+
+p_value_e
+```
+
+The estimated p value when simulated 10,000 times is only 0.1 away from the observed p_value from our data set
+
+```{r}
+ggplot(df_test, mapping = aes(x=diff)) +
+  geom_density() +
+  #geom_norm_density(mu = mean(df_test$diff), sd(df_test$diff)) +
+  geom_vline(aes(xintercept = test$est), color = "red", linetype=2)+
+  theme_bw()
+```
+
+
+
+**Results**
+
+P value = 0.682 > 0.5 --> We can reject the null hypothesis, confirming that the likelihood of hitting the over is not equal to that of hitting the under.
+
+The difference in proportions for our observed and simulated p-values is less than 0.05,
+meaning that there is statistical significance in the results of our p-value calculations. 
