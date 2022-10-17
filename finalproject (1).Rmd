@@ -1,0 +1,115 @@
+---
+title: "FinalProject"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE)
+library(tidyverse)
+library(lubridate)
+source("../scripts/viridis.R")
+source("../scripts/ggprob.R")
+```
+
+Read in data
+```{r}
+raw_scores_13 = read_csv("data/2012-13/raw_scores.txt") %>%
+             rename(
+               Date = X1
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_14 = read_csv("data/2013-14/raw_scores.txt") %>%
+             rename(
+               Date = X1
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_15 = read_csv("data/2014-15/raw_scores.txt") %>%
+             rename(
+               Date = X1
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_16 = read_csv("data/2015-16/raw_scores.txt") %>%
+             rename(
+               Date = GAME_DATE_EST
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_17 = read_csv("data/2016-17/raw_scores.txt") %>%
+             rename(
+               Date = GAME_DATE_EST
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_18 = read_csv("data/2017-18/raw_scores.txt") %>%
+             rename(
+               Date = GAME_DATE_EST
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+raw_scores_19 = read_csv("data/2018-19/raw_scores.txt") %>%
+             rename(
+               Date = X1
+             ) %>%
+             select(
+               Date, GAME_ID, TEAM_ID, TEAM_ABBREVIATION, TEAM_CITY_NAME, PTS)
+
+
+raw_scores <- bind_rows(
+                  raw_scores_13, raw_scores_14,raw_scores_15,raw_scores_16,raw_scores_17,raw_scores_18,raw_scores_19
+              )%>%
+              rename(
+                GameId = GAME_ID,
+                Team_Abbr =   TEAM_ABBREVIATION,
+                Team = TEAM_CITY_NAME,
+                TeamId =  TEAM_ID
+              ) %>%
+              drop_na()
+
+vegas_13 = read_csv("data/2012-13/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+
+vegas_14 = read_csv("data/2013-14/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+vegas_15 = read_csv("data/2014-15/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+vegas_16 = read_csv("data/2015-16/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+vegas_17 = read_csv("data/2016-17/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+vegas_18 = read_csv("data/2017-18/vegas.txt") %>%
+        select(
+          Date, GameId, Team, TeamId,Average_Line_Spread, Average_Line_OU 
+        )
+vegas_19 = read_csv("data/2018-19/vegas.txt") %>%
+        select(
+          Date, GameId, Team,TeamId, Average_Line_Spread, Average_Line_OU 
+        )
+
+vegas = bind_rows(
+        vegas_13,vegas_14,vegas_15,vegas_16,vegas_17,vegas_18,vegas_19
+        ) %>%
+        select(-Date, -Team) %>%
+        drop_na()
+
+rm(raw_scores_13,raw_scores_14,raw_scores_15,raw_scores_16,raw_scores_17,raw_scores_18,raw_scores_19,
+   vegas_13,vegas_14,vegas_15,vegas_16,vegas_17,vegas_18,vegas_19)
+#playoff = read_csv("data/2012-13/vegas_playoff.txt")
+```
+```{r}
+  
+ betting_data <- raw_scores %>%
+                 right_join(vegas, by=c("GameId", "TeamId"))
+```
